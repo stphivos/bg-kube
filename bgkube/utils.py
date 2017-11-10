@@ -1,3 +1,7 @@
+from __future__ import print_function
+
+import time
+
 from bgkube.errors import RequiredOptionError
 
 
@@ -12,7 +16,7 @@ def require(obj, attr):
 
 def read_vars(filename):
     with open(filename) as fp:
-        for line in fp:
+        for line in fp.readlines():
             line = line.strip()
 
             if not line or line.startswith('#') or '=' not in line:
@@ -39,6 +43,10 @@ def replace_vars(source, values):
         result = result.replace('${}'.format(k), str(v))
 
     return result
+
+
+def timestamp():
+    return int(time.time())
 
 
 def output(msg, end='\n'):
@@ -72,8 +80,3 @@ def log(message, **defaults):
         return wrapped
 
     return wrap
-
-
-def timestamp():
-    from time import time
-    return int(time())

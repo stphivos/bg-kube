@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from bgkube.bg import BgKube
-from bgkube.utils import read_vars
+from bgkube.utils import read_vars, output
 
 
 def run():
@@ -33,7 +33,7 @@ def run():
     try:
         getattr(BgKube(options), options.command)()
     except Exception as e:
-        print(e)
+        output(e)
 
 
 if __name__ == '__main__':
