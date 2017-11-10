@@ -7,7 +7,13 @@ from bgkube.utils import dot_env_dict, read_with_merge_vars
 
 class KubeApi:
     def __init__(self):
-        self.client = pykube.HTTPClient(pykube.KubeConfig.from_file(expanduser('~/.kube/config')))
+        self._client = None
+
+    @property
+    def client(self):
+        if not self._client:
+            self._client = pykube.HTTPClient(pykube.KubeConfig.from_file(expanduser('~/.kube/config')))
+        return self._client
 
     def get_config_with_vars(self, config_file, env_file, **attrs):
         merge_vars = dict(dot_env_dict(env_file)) if env_file else {}
