@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from bgkube.bg import BgKube
-from bgkube.utils import read_vars, output
+from bgkube.utils import dot_env_dict, output
 
 
 def run():
@@ -24,7 +24,7 @@ def run():
 
     options = parser.parse_args()
     if options.env_file:
-        for k, v in dict(read_vars(options.env_file)).items():
+        for k, v in dict(dot_env_dict(options.env_file)).items():
             attr_name = k.lower()
 
             if hasattr(options, attr_name) and getattr(options, attr_name) is None:

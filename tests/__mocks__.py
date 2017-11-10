@@ -1,6 +1,22 @@
+from random import randint, choice
+from string import ascii_letters
+from sys import maxsize
+from mock import patch
+
+patch_object = patch.object = patch.object
+
+
 class DictionaryObject(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
+
+
+def get_random_int(min_value=-maxsize, max_value=maxsize):
+    return randint(min_value, max_value)
+
+
+def get_random_str(min_length=1, max_length=100):
+    return ''.join(choice(ascii_letters) for _ in range(randint(min_length, max_length)))
 
 
 def get_values():

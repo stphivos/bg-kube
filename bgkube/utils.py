@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import time
 
 from bgkube.errors import RequiredOptionError
@@ -14,7 +15,7 @@ def require(obj, attr):
     return value
 
 
-def read_vars(filename):
+def dot_env_dict(filename):
     with open(filename) as fp:
         for line in fp.readlines():
             line = line.strip()
@@ -36,13 +37,14 @@ def read_vars(filename):
             yield k, v
 
 
-def replace_vars(source, values):
-    result = source
+def read_with_merge_vars(filename, merge_vars):
+    with open(filename) as fs:
+        result = fs.read()
 
-    for k, v in values.items():
-        result = result.replace('${}'.format(k), str(v))
+        for k, v in merge_vars.items():
+            result = result.replace('${}'.format(k), str(v))
 
-    return result
+        return result
 
 
 def timestamp():
@@ -50,7 +52,8 @@ def timestamp():
 
 
 def output(msg, end='\n'):
-    print(msg, end=end)
+    if not os.environ.get('PYTEST_CURRENT_TEST', None):
+        print(msg, end=end)
 
 
 def log(message, **defaults):

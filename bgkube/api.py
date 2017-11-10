@@ -2,25 +2,23 @@ import pykube
 from yaml import load
 from os.path import expanduser
 
-from bgkube.utils import read_vars, replace_vars
+from bgkube.utils import dot_env_dict, read_with_merge_vars
 
 
 class KubeApi:
     def __init__(self):
         self.client = pykube.HTTPClient(pykube.KubeConfig.from_file(expanduser('~/.kube/config')))
 
-    def config_dict(self, config_file, env_file, **merge_vars):
-        values = dict(read_vars(env_file)) if env_file else {}
-        values.update(merge_vars)
+    def get_config_with_vars(self, config_file, env_file, **attrs):
+        merge_vars = dict(dot_env_dict(env_file)) if env_file else {}
+        merge_vars.update(attrs)
 
-        with open(config_file) as fs:
-            data = load(replace_vars(fs.read(), values))
+        data = load(read_with_merge_vars(config_file, merge_vars))
+        return data
 
-            return data
-
-    def apply(self, config_file, env_file, **merge_vars):
-        data = self.config_dict(config_file, env_file, **merge_vars)
-        obj = getattr(pykube, data['kind'])(self.client, data)
+    def apply(self, config_file, env_file, **attrs):
+        config_data = self.get_config_with_vars(config_file, env_file, **attrs)
+        obj = getattr(pykube, config_data['kind'])(self.client, config_data)
 
         if obj.exists():
             obj.update()

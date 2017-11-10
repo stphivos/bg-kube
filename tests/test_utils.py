@@ -4,7 +4,7 @@ from unittest import TestCase
 from yaml import dump, load
 
 from bgkube.errors import RequiredOptionError
-from bgkube.utils import require, read_vars, replace_vars, timestamp
+from bgkube.utils import require, dot_env_dict, read_with_merge_vars, timestamp
 from tests.__mocks__ import get_options, get_values, get_lines
 
 
@@ -22,23 +22,25 @@ class TestUtils(TestCase):
 
         self.assertRaises(RequiredOptionError, require, obj, key)
 
-    def test_utils_read_vars_parses_file_values_with_valid_types(self):
+    def test_utils_dot_env_dict_returns_parsed_file_content_as_dictionary(self):
         values = get_values()
         open_mock = mock_open(read_data='\n'.join(get_lines(values)))
 
         with patch('bgkube.utils.open'.format(__name__), open_mock):
-            vars_dict = dict(read_vars('some-filename'))
+            vars_dict = dict(dot_env_dict('some-filename'))
             self.assertEqual(len(values), len(vars_dict))
 
             for k, v in vars_dict.items():
                 expected = values[k]
+
                 if isinstance(expected, str):
                     expected = expected.strip()
+
                 self.assertEqual(v, expected)
 
-    def test_utils_replace_vars_updates_values_from_source_dictionary(self):
-        values = {'ABC': 1, 'DEF': 2, 'GHI': 3, 'JKL': 4, 'MNO': 5, }
-        config = {
+    def test_utils_read_with_merge_vars_returns_file_content_with_vars_replaced_from_source_dictionary(self):
+        merge_vars = {'ABC': 1, 'DEF': 2, 'GHI': 3, 'JKL': 4, 'MNO': 5, }
+        open_mock = mock_open(read_data=dump({
             'a': '$ABC',
             'b': {
                 'c': '$DEF',
@@ -48,19 +50,20 @@ class TestUtils(TestCase):
                     'g': '$MNO'
                 }]
             }
-        }
-        result = load(replace_vars(dump(config), values))
-        self.assertEqual(result, {
-            'a': 1,
-            'b': {
-                'c': 2,
-                'd': 'word-3',
-                'e': [{
-                    'f': 'words-in-list4',
-                    'g': 5
-                }]
-            }
-        })
+        }))
+        with patch('bgkube.utils.open'.format(__name__), open_mock):
+            result = load(read_with_merge_vars('some-filename', merge_vars))
+            self.assertEqual(result, {
+                'a': 1,
+                'b': {
+                    'c': 2,
+                    'd': 'word-3',
+                    'e': [{
+                        'f': 'words-in-list4',
+                        'g': 5
+                    }]
+                }
+            })
 
     @patch('bgkube.utils.time')
     def test_utils_timestamp_returns_time_int_representation(self, time_mock):

@@ -1,5 +1,7 @@
+from six import add_metaclass
 from time import sleep
 
+from bgkube import cmd
 from bgkube.api import KubeApi
 from bgkube.run import Runner
 from bgkube.errors import ActionFailedError
@@ -7,7 +9,7 @@ from bgkube.registries import GoogleContainerRegistry
 from bgkube.utils import output, log, timestamp, require
 
 
-class BgKube:
+class BgKubeMeta(type):
     required = [
         'docker_machine_name', 'cluster_zone', 'cluster_name', 'image_name', 'service_name', 'service_config',
         'deployment_config'
@@ -21,11 +23,23 @@ class BgKube:
         'dockerfile': './Dockerfile'
     }
 
+    def __new__(mcs, name, bases, attrs):
+        attrs['required'] = mcs.required
+        attrs['optional'] = mcs.optional
+
+        for field in mcs.required + mcs.optional:
+            attrs[field] = mcs.optional_defaults.get(field, None)
+
+        return super(BgKubeMeta, mcs).__new__(mcs, name, bases, attrs)
+
+
+@add_metaclass(BgKubeMeta)
+class BgKube(object):
     def __init__(self, options):
         self.load_options(options)
 
         self.kube_api = KubeApi()
-        self.runner = Runner('eval $(docker-machine env {})'.format(self.docker_machine_name))
+        self.runner = Runner(cmd.DOCKERMACHINE_EVAL_ENV.format(self.docker_machine_name))
         self.container_registry = GoogleContainerRegistry(self.runner, self.cluster_name, self.cluster_zone)
 
     def load_options(self, options):
@@ -33,15 +47,12 @@ class BgKube:
             setattr(self, opt, require(options, opt))
 
         for opt in self.optional:
-            value = getattr(options, opt, None)
-            if value is None and opt in self.optional_defaults:
-                value = self.optional_defaults[opt]
-            setattr(self, opt, value)
+            setattr(self, opt, getattr(options, opt, getattr(self, opt)))
 
     @log('Building image {image_name} using {dockerfile}...')
     def build(self):
         tag = timestamp()
-        self.runner.start('docker build {context} -f {dockerfile} -t {image}:{tag}'.format(
+        self.runner.start(cmd.DOCKER_BUILD.format(
             context=self.context,
             dockerfile=self.dockerfile,
             image=self.image_name,
@@ -133,6 +144,6 @@ class BgKube:
         color = self.other_env()
 
         if color:
-            self.apply('public service', self.service_config, color=color)
+            self.swap(color)
         else:
             raise ActionFailedError('Cannot rollback to a previous environment because one does not exist.')
