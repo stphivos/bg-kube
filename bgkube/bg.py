@@ -11,12 +11,12 @@ from bgkube.utils import output, log, timestamp, require
 
 class BgKubeMeta(type):
     required = [
-        'docker_machine_name', 'cluster_zone', 'cluster_name', 'image_name', 'service_name', 'service_config',
+        'cluster_zone', 'cluster_name', 'image_name', 'service_name', 'service_config',
         'deployment_config'
     ]
     optional = [
         'context', 'dockerfile', 'env_file', 'smoke_service_name', 'smoke_tests_command', 'smoke_service_config',
-        'db_migration_job_config'
+        'db_migration_job_config', 'docker_machine_name'
     ]
     optional_defaults = {
         'context': '.',
