@@ -9,7 +9,6 @@ class KubeApi:
     def __init__(self):
         self._client = None
 
-    @property
     def client(self):
         if not self._client:
             self._client = pykube.HTTPClient(pykube.KubeConfig.from_file(expanduser('~/.kube/config')))
@@ -24,7 +23,7 @@ class KubeApi:
 
     def apply(self, config_file, env_file, **attrs):
         config_data = self.get_config_with_vars(config_file, env_file, **attrs)
-        obj = getattr(pykube, config_data['kind'])(self.client, config_data)
+        obj = getattr(pykube, config_data['kind'])(self.client(), config_data)
 
         if obj.exists():
             obj.update()
@@ -33,6 +32,6 @@ class KubeApi:
 
     def service(self, name):
         try:
-            return pykube.Service.objects(self.client).get_by_name(name)
+            return pykube.Service.objects(self.client()).get_by_name(name)
         except pykube.ObjectDoesNotExist:
             return None

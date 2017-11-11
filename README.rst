@@ -112,7 +112,7 @@ Deployment Config
       name: $DEPLOYMENT_NAME-$COLOR
       namespace: default
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         matchLabels:
           run: $SERVICE_RUN_LABEL

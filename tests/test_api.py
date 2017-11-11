@@ -9,6 +9,7 @@ from bgkube.api import KubeApi
 class TestApi(TestCase):
     def setUp(self):
         self.api = KubeApi()
+        setattr(self.api, 'client', Mock())
 
     @patch('bgkube.api.dot_env_dict')
     @patch('bgkube.api.read_with_merge_vars')
