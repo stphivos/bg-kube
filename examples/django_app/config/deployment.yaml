@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: $SERVICE_RUN_LABEL
+  name: $DEPLOYMENT_NAME-$COLOR
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: $SERVICE_RUN_LABEL
+  template:
+    metadata:
+      labels:
+        run: $SERVICE_RUN_LABEL
+        type: deployment
+        color: $COLOR
+    spec:
+      containers:
+      - command: ["gunicorn", "django_app.wsgi", "--name", "todoapp", "-b", ":$CONTAINER_PORT"]
+        env:
+        - name: ENV
+          value: $ENV
+        - name: DB_NAME
+          value: $DB_NAME
+        - name: DB_USER
+          value: $DB_USER
+        - name: DB_PASS
+          value: $DB_PASS
+        - name: DB_HOST
+          value: $DB_HOST
+        - name: DB_PORT
+          value: "$DB_PORT"
+        image: $IMAGE_NAME:$TAG
+        name: $CONTAINER_NAME
+        ports:
+        - containerPort: $CONTAINER_PORT
+          protocol: TCP
