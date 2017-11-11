@@ -47,7 +47,7 @@ class BgKube(object):
             setattr(self, opt, require(options, opt))
 
         for opt in self.optional:
-            setattr(self, opt, getattr(options, opt, getattr(self, opt)))
+            setattr(self, opt, getattr(options, opt, None) or getattr(self, opt))
 
     @log('Building image {image_name} using {dockerfile}...')
     def build(self):
@@ -137,7 +137,7 @@ class BgKube(object):
         else:
             raise ActionFailedError('Cannot promote {} deployment because smoke tests failed'.format(next_color))
 
-        output('Done!')
+        output('Done.')
 
     @log('Rolling back to previous deployment...')
     def rollback(self):
@@ -147,3 +147,5 @@ class BgKube(object):
             self.swap(color)
         else:
             raise ActionFailedError('Cannot rollback to a previous environment because one does not exist.')
+
+        output('Done.')
