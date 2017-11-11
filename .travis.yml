@@ -17,10 +17,10 @@ matrix:
       - TOX_ENV=py36
 
 install:
-    - pip install tox-travis coveralls
+    - pip install tox-travis codecov
 
 script:
-    - tox
+    - tox -e $TOX_ENV
 
 after_success:
-    - coveralls
+    - codecov -e $TOX_ENV
