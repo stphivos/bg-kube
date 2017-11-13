@@ -40,7 +40,7 @@ class TestApi(TestCase):
         dot_env = '.env file'
         result = self.api.get_config_with_vars(config, dot_env, **bg_dynamic_vars)
 
-        self.assertEqual(result, load(merge_conf_mock.return_value))
+        self.assertEqual(list(result), [load(merge_conf_mock.return_value)])
 
         read_env_mock.assert_called_once_with(dot_env)
         merge_conf_mock.assert_called_once_with(config, merge_vars)
@@ -49,7 +49,7 @@ class TestApi(TestCase):
     @patch('pykube.Deployment.exists')
     @patch('bgkube.api.KubeApi.get_config_with_vars')
     def test_api_apply_updates_existing_deployment_using_config_data(self, get_config_mock, exists_mock, update_mock):
-        get_config_mock.return_value = {'kind': 'Deployment'}
+        get_config_mock.return_value = iter([{'kind': 'Deployment'}])
         exists_mock.return_value = True
 
         self.api.apply('config file', '.env file')
@@ -60,7 +60,7 @@ class TestApi(TestCase):
     @patch('pykube.Service.exists')
     @patch('bgkube.api.KubeApi.get_config_with_vars')
     def test_api_apply_updates_existing_service_using_config_data(self, get_config_mock, exists_mock, update_mock):
-        get_config_mock.return_value = {'kind': 'Service'}
+        get_config_mock.return_value = iter([{'kind': 'Service'}])
         exists_mock.return_value = True
 
         self.api.apply('config file', '.env file')
@@ -71,7 +71,7 @@ class TestApi(TestCase):
     @patch('pykube.Job.exists')
     @patch('bgkube.api.KubeApi.get_config_with_vars')
     def test_api_apply_creates_new_job_using_config_data(self, get_config_mock, exists_mock, create_mock):
-        get_config_mock.return_value = {'kind': 'Job'}
+        get_config_mock.return_value = iter([{'kind': 'Job'}])
         exists_mock.return_value = False
 
         self.api.apply('config file', '.env file')

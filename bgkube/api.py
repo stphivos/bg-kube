@@ -18,17 +18,17 @@ class KubeApi:
         merge_vars = dict(dot_env_dict(env_file)) if env_file else {}
         merge_vars.update(attrs)
 
-        data = load(read_with_merge_vars(config_file, merge_vars))
-        return data
+        for section in read_with_merge_vars(config_file, merge_vars).split('---'):
+            yield load(section)
 
     def apply(self, config_file, env_file, **attrs):
-        config_data = self.get_config_with_vars(config_file, env_file, **attrs)
-        obj = getattr(pykube, config_data['kind'])(self.client(), config_data)
+        for config in self.get_config_with_vars(config_file, env_file, **attrs):
+            obj = getattr(pykube, config['kind'])(self.client(), config)
 
-        if obj.exists():
-            obj.update()
-        else:
-            obj.create()
+            if obj.exists():
+                obj.update()
+            else:
+                obj.create()
 
     def service(self, name):
         try:
