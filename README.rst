@@ -42,9 +42,11 @@ Installation
 Prerequisites
 =============
 
-* `Docker <https://docs.docker.com/engine/installation/>`_
-* Google Cloud SDK
-    * `Install <https://cloud.google.com/sdk/downloads/>`_
+* `Docker <https://docs.docker.com/engine/installation>`_
+* Google Cloud
+    * `Create project <https://console.cloud.google.com/projectcreate>`_
+    * `Create cluster <https://console.cloud.google.com/kubernetes/add>`_
+    * `Install SDK <https://cloud.google.com/sdk/downloads>`_
     * Login using ``gcloud init``
     * Select project using ``gcloud config set project <project-id>``
 
