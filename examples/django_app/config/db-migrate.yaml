@@ -2,7 +2,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   labels:
-    run: $SERVICE_RUN_LABEL
+    env: $ENV
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
   name: job-db-migrate-$TAG
   namespace: default
 spec:
@@ -11,7 +13,9 @@ spec:
     metadata:
       name: job-db-migrate
       labels:
-        run: $SERVICE_RUN_LABEL
+        env: $ENV
+        project: $LABEL_PROJECT
+        service: $LABEL_SERVICE
     spec:
       containers:
       - name: $CONTAINER_NAME
@@ -21,14 +25,4 @@ spec:
         env:
         - name: ENV
           value: $ENV
-        - name: DB_NAME
-          value: $DB_NAME
-        - name: DB_USER
-          value: $DB_USER
-        - name: DB_PASS
-          value: $DB_PASS
-        - name: DB_HOST
-          value: $DB_HOST
-        - name: DB_PORT
-          value: "$DB_PORT"
       restartPolicy: Never

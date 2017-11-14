@@ -2,18 +2,24 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    run: $SERVICE_RUN_LABEL
+    env: $ENV
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
   name: $DEPLOYMENT_NAME-$COLOR
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: $SERVICE_RUN_LABEL
+      env: $ENV
+      project: $LABEL_PROJECT
+      service: $LABEL_SERVICE
   template:
     metadata:
       labels:
-        run: $SERVICE_RUN_LABEL
+        env: $ENV
+        project: $LABEL_PROJECT
+        service: $LABEL_SERVICE
         type: deployment
         color: $COLOR
     spec:
@@ -22,18 +28,21 @@ spec:
         env:
         - name: ENV
           value: $ENV
-        - name: DB_NAME
-          value: $DB_NAME
-        - name: DB_USER
-          value: $DB_USER
-        - name: DB_PASS
-          value: $DB_PASS
-        - name: DB_HOST
-          value: $DB_HOST
-        - name: DB_PORT
-          value: "$DB_PORT"
+        - name: COLOR
+          value: $COLOR
         image: $IMAGE_NAME:$TAG
         name: $CONTAINER_NAME
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: container-port
+          initialDelaySeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: container-port
+          initialDelaySeconds: 30
         ports:
-        - containerPort: $CONTAINER_PORT
+        - name: container-port
+          containerPort: $CONTAINER_PORT
           protocol: TCP
