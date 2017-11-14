@@ -9,5 +9,7 @@ router = routers.DefaultRouter()
 router.register(r'todos', views.TodoViewSet, base_name='todos')
 
 urlpatterns = [
+    url(r'^ready', views.ready),
+    url(r'^live', views.live),
     url(r'^', include(router.urls)),
 ]

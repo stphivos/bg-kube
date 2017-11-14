@@ -2,16 +2,21 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    run: $SERVICE_RUN_LABEL
+    env: $ENV
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
   name: $SMOKE_SERVICE_NAME
   namespace: default
 spec:
+  type: LoadBalancer
   ports:
-  - protocol: TCP
-    port: $SERVICE_PORT
+  - port: $SERVICE_PORT
     targetPort: $CONTAINER_PORT
+    protocol: TCP
+    name: http
   selector:
-    run: $SERVICE_RUN_LABEL
+    env: $ENV
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
     type: deployment
     color: $COLOR
-  type: LoadBalancer
