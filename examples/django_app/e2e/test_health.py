@@ -8,4 +8,4 @@ class SmokeTests(TestCase):
 
     def test_service_is_up(self):
         response = requests.get('http://{}/todos/'.format(os.environ['TEST_HOST']))
-        assert response.status_code == 200
+        assert response.status_code == 200, response.status_code
