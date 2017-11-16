@@ -49,7 +49,7 @@ Prerequisites
     * `Install SDK <https://cloud.google.com/sdk/downloads>`_
     * Login using ``gcloud init``
     * Select project using ``gcloud config set project <project-id>``
-
+* `Kubernetes command-line tool <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_
 
 Example Setup
 =============
