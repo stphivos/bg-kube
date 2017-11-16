@@ -46,6 +46,7 @@ def get_options():
         image_name='gcr.io/project-id/my-rest-api',
         service_name='svc-rest-api',
         service_config='./config/services/public.yaml',
+        deployment_name='dep-rest-api',
         deployment_config='./config/deployments/main.yaml',
         context='.',
         dockerfile='./Dockerfile',
@@ -53,5 +54,5 @@ def get_options():
         smoke_service_name='svc-rest-api-e2e',
         smoke_tests_command='pytest -s ./src/e2e',
         smoke_service_config='./config/services/smoke.yaml',
-        db_migration_job_config='./config/jobs/db-migrate.yaml',
+        db_migrations_job_config_seed='./config/jobs/db-migrate.yaml',
     )

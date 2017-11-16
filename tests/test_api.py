@@ -96,3 +96,35 @@ class TestApi(TestCase):
         objects_mock.return_value = Mock(get_by_name=Mock(side_effect=ObjectDoesNotExist()))
 
         self.assertIsNone(self.api.service('service name'))
+
+    @patch('pykube.Deployment.objects')
+    def test_api_deployment_returns_deployment_object_by_name_when_it_exists(self, objects_mock):
+        name = 'deployment name'
+        obj = {'name': name}
+
+        get_mock = Mock(return_value=obj)
+        objects_mock.return_value = Mock(get_by_name=get_mock)
+
+        result = self.api.deployment(name)
+
+        self.assertEqual(result, obj)
+        get_mock.assert_called_once_with(name)
+
+    @patch('pykube.Deployment.objects')
+    def test_api_deployment_returns_none_when_not_found_by_name(self, objects_mock):
+        objects_mock.return_value = Mock(get_by_name=Mock(side_effect=ObjectDoesNotExist()))
+
+        self.assertIsNone(self.api.deployment('deployment name'))
+
+    @patch('pykube.Pod.objects')
+    def test_api_pods_returns_list_of_pod_objects_filtered_by_label_selectors(self, objects_mock):
+        objects = [{'name': 'pod1'}, {'name': 'pod2'}, {'name': 'pod3'}, {'name': 'pod4'}]
+        labels = {'tag': 123, 'color': 'blue'}
+
+        filter_mock = Mock(return_value=objects)
+        objects_mock.return_value = Mock(filter=filter_mock)
+
+        results = self.api.pods(**labels)
+
+        self.assertEqual(results, objects)
+        filter_mock.assert_called_once_with(selector=labels)

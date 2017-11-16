@@ -74,8 +74,8 @@ Service Config - Public
         targetPort: $CONTAINER_PORT
       selector:
         run: $SERVICE_RUN_LABEL
-        type: deployment
         color: $COLOR
+        type: pod
       type: LoadBalancer
 
 
@@ -97,8 +97,8 @@ Service Config - Health Checks
         targetPort: $CONTAINER_PORT
       selector:
         run: $SERVICE_RUN_LABEL
-        type: deployment
         color: $COLOR
+        type: pod
       type: LoadBalancer
 
 
@@ -110,6 +110,7 @@ Deployment Config
     kind: Deployment
     metadata:
       labels:
+        color: $COLOR
         run: $SERVICE_RUN_LABEL
       name: $DEPLOYMENT_NAME-$COLOR
       namespace: default
@@ -117,13 +118,15 @@ Deployment Config
       replicas: 2
       selector:
         matchLabels:
+          color: $COLOR
           run: $SERVICE_RUN_LABEL
       template:
         metadata:
           labels:
             run: $SERVICE_RUN_LABEL
-            type: deployment
             color: $COLOR
+            tag: "$TAG"
+            type: pod
         spec:
           containers:
           - command: ["gunicorn", "django_app.wsgi", "--name", "todoapp", "-b", ":$CONTAINER_PORT"]

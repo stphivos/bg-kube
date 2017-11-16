@@ -18,8 +18,8 @@ spec:
     env: $ENV
     project: $LABEL_PROJECT
     service: $LABEL_SERVICE
-    type: deployment
     color: $COLOR
+    type: pod
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

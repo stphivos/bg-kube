@@ -51,9 +51,9 @@ def timestamp():
     return int(time.time())
 
 
-def output(msg, end='\n'):
+def output(msg, end='\n', **kwargs):
     if not os.environ.get('PYTEST_CURRENT_TEST', None):
-        print(msg, end=end)
+        print(msg, end=end, **kwargs)
 
 
 def log(message, **defaults):
@@ -75,7 +75,10 @@ def log(message, **defaults):
                 if not params.get(k, ''):
                     params[k] = v
 
-            output('=> ' + message.format(**{k: '\'{}\''.format(v) for k, v in params.items()}))
+            if message.strip().startswith('$'):
+                output(message.format(**{k: '{}'.format(v) for k, v in params.items()}))
+            else:
+                output('=> ' + message.format(**{k: '\'{}\''.format(v) for k, v in params.items()}))
             result = func(*args, **kwargs)
 
             return result

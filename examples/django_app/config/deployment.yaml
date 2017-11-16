@@ -1,17 +1,19 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  labels:
-    env: $ENV
-    project: $LABEL_PROJECT
-    service: $LABEL_SERVICE
   name: $DEPLOYMENT_NAME-$COLOR
   namespace: default
+  labels:
+    env: $ENV
+    color: $COLOR
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       env: $ENV
+      color: $COLOR
       project: $LABEL_PROJECT
       service: $LABEL_SERVICE
   template:
@@ -20,8 +22,9 @@ spec:
         env: $ENV
         project: $LABEL_PROJECT
         service: $LABEL_SERVICE
-        type: deployment
         color: $COLOR
+        tag: "$TAG"
+        type: pod
     spec:
       containers:
       - command: ["gunicorn", "django_app.wsgi", "--name", "todoapp", "-b", ":$CONTAINER_PORT"]
