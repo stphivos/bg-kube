@@ -35,3 +35,12 @@ class KubeApi:
             return pykube.Service.objects(self.client()).get_by_name(name)
         except pykube.ObjectDoesNotExist:
             return None
+
+    def deployment(self, name):
+        try:
+            return pykube.Deployment.objects(self.client()).get_by_name(name)
+        except pykube.ObjectDoesNotExist:
+            return None
+
+    def pods(self, **labels):
+        return list(pykube.Pod.objects(self.client()).filter(selector=labels))
