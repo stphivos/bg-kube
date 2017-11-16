@@ -173,7 +173,6 @@ Publish using
 
 Future Improvements
 ===================
-* Capability to unapply database migrations on unsuccessful deployments
 * Checks to enforce database migrations are backwards compatible
 * Support for more cloud providers
 * Better test coverage
