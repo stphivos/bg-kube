@@ -7,7 +7,7 @@ req = [str(ir.req) for ir in install_req]
 setup(
     name='bg-kube',
     packages=['bgkube'],
-    version='0.0.8',
+    version='0.0.9',
     description='An interface for automating blue-green deployments using Kubernetes',
     author='Phivos Stylianides',
     author_email='stphivos@gmail.com',
