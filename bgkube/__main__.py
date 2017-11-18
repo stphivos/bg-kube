@@ -1,12 +1,15 @@
 from argparse import ArgumentParser
+from traceback import format_exc
 
 from bgkube.bg import BgKube
+from bgkube.errors import BlueGreenError
 from bgkube.utils import dot_env_dict, output
 
 
 def get_parser():
     parser = ArgumentParser()
-    parser.add_argument('command', help='', default='publish', choices=['publish', 'rollback'])
+    parser.add_argument('command', help='', default='publish', choices=['publish', 'rollback', 'build', 'push'])
+    parser.add_argument('command_args', nargs='*')
     parser.add_argument('-e', '--env-file', help='.env file for the options below and application vars in the configs')
     parser.add_argument('-c', '--cluster-name', help='unique name of the cluster')
     parser.add_argument('-z', '--cluster-zone', help='zone name of the cluster location')
@@ -36,6 +39,8 @@ def get_parser():
         help='shell command executed on any of the running deployment pods with the migrations status command stdout '
              'as argument - retrieved before applying migrations, to perform a rollback to that state'
     )
+    parser.add_argument('--kops-state-store', help='aws cluster state storage bucket name')
+    parser.add_argument('--container-registry', help='container registry alias or implementation class')
 
     return parser
 
@@ -56,9 +61,11 @@ def run():
         load_options_from_env(options)
 
     try:
-        getattr(BgKube(options), options.command)()
-    except Exception as e:
+        getattr(BgKube(options), options.command)(*options.command_args)
+    except BlueGreenError as e:
         output(e)
+    except Exception:
+        output(format_exc())
 
 
 if __name__ == '__main__':

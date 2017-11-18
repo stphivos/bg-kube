@@ -55,4 +55,5 @@ def get_options():
         smoke_tests_command='pytest -s ./src/e2e',
         smoke_service_config='./config/services/smoke.yaml',
         db_migrations_job_config_seed='./config/jobs/db-migrate.yaml',
+        kops_state_store='s3://todoapp-cluster-state-store'
     )

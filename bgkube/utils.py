@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import os
 import time
+import requests
+from inspect import isclass
 
 from bgkube.errors import RequiredOptionError
 
@@ -41,8 +43,8 @@ def read_with_merge_vars(filename, merge_vars):
     with open(filename) as fs:
         result = fs.read()
 
-        for k, v in merge_vars.items():
-            result = result.replace('${}'.format(k), str(v))
+        for k in sorted(merge_vars.keys(), reverse=True):
+            result = result.replace('${}'.format(k), str(merge_vars[k]))
 
         return result
 
@@ -86,3 +88,32 @@ def log(message, **defaults):
         return wrapped
 
     return wrap
+
+
+def module_type_subclasses(mod, t):
+    def is_valid(obj):
+        return isclass(obj) and issubclass(obj, t) and obj != t
+
+    for name, cls in __import__(mod, fromlist=[mod]).__dict__.items():
+        if is_valid(cls):
+            yield name, cls
+
+
+def get_loadbalancer_address(service):
+    # TODO: Should be improved to either returning all possible addresses or get smarter at detecting the right one
+    ports = service.obj['spec']['ports'][0]
+    scheme = ports.get('name', 'http')
+    port = ports['port']
+
+    ingress = service.obj['status']['loadBalancer']['ingress'][0]
+    host = ingress.get('ip', None) or ingress.get('hostname', None)
+
+    return '{}://{}:{}'.format(scheme, host, port)
+
+
+def is_host_up(address, status_code=200):
+    try:
+        response = requests.get(address)
+        return response.status_code == status_code
+    except requests.exceptions.ConnectionError:
+        return False

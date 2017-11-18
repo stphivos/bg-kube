@@ -1,12 +1,11 @@
 from six import add_metaclass
 from time import sleep
 
-from bgkube import cmd
+from bgkube import cmd, registries
 from bgkube.api import KubeApi
 from bgkube.run import Runner
 from bgkube.errors import ActionFailedError
-from bgkube.registries import GoogleContainerRegistry
-from bgkube.utils import output, log, timestamp, require
+from bgkube.utils import output, log, timestamp, require, get_loadbalancer_address, is_host_up
 
 
 class BgKubeMeta(type):
@@ -17,11 +16,12 @@ class BgKubeMeta(type):
     optional = [
         'context', 'dockerfile', 'env_file', 'smoke_service_name', 'smoke_tests_command', 'smoke_service_config',
         'docker_machine_name', 'db_migrations_job_config_seed', 'db_migrations_status_command',
-        'db_migrations_apply_command', 'db_migrations_rollback_command'
+        'db_migrations_apply_command', 'db_migrations_rollback_command', 'kops_state_store', 'container_registry'
     ]
     optional_defaults = {
         'context': '.',
-        'dockerfile': './Dockerfile'
+        'dockerfile': './Dockerfile',
+        'container_registry': registries.DEFAULT
     }
 
     def __new__(mcs, name, bases, attrs):
@@ -41,7 +41,7 @@ class BgKube(object):
 
         self.kube_api = KubeApi()
         self.runner = Runner(cmd.DOCKERMACHINE_EVAL_ENV.format(self.docker_machine_name))
-        self.container_registry = GoogleContainerRegistry(self.runner, self.cluster_name, self.cluster_zone)
+        self.registry = registries.load(self.runner, options)
 
     def load_options(self, options):
         for opt in self.required:
@@ -62,16 +62,20 @@ class BgKube(object):
 
         return tag
 
-    @log('Pushing image {image_name}:{tag} to {container_registry}...')
+    @log('Pushing image {image_name}:{tag} to {registry}...')
     def push(self, tag):
-        self.container_registry.push('{}:{}'.format(self.image_name, tag))
+        self.registry.push('{}:{}'.format(self.image_name, tag))
 
     @log('Applying {_} using config: {filename}...')
     def apply(self, _, filename, tag=None, color=''):
-        self.kube_api.apply(filename, self.env_file, TAG=tag, COLOR=color)
+        self.kube_api.apply(filename, self.env_file, TAG=tag, COLOR=color, ENV_FILE=self.env_file)
+
+    def pod_find(self, tag, color):
+        results = [pod for pod in self.kube_api.pods(tag=tag, color=color) if pod.ready]
+        return results[0] if results else None
 
     def pod_exec(self, tag, color, command, *args):
-        pod = [pod for pod in self.kube_api.pods(tag=tag, color=color) if pod.ready][0].name
+        pod = self.pod_find(tag, color).name
         return self.runner.start(cmd.KUBECTL_EXEC.format(pod=pod, command=command, args=' '.join(args)), capture=True)
 
     def migrate_initial(self, tag):
@@ -115,16 +119,11 @@ class BgKube(object):
         }.get(self.active_env(), None)
 
     def deploy(self, tag):
-        def extractor(result):
-            status = result.obj['status']
-
-            if status['availableReplicas'] == status['readyReplicas'] == status['updatedReplicas'] == result.replicas:
-                return result.replicas
-
-            return None
-
         color = self.other_env() or 'blue'
         target_deployment_name = '{}-{}'.format(self.deployment_name, color)
+
+        def extractor(deployment):
+            return deployment.replicas if deployment.ready and self.pod_find(tag, color) else None
 
         self.apply('deployment', self.deployment_config, tag=tag, color=color)
         self.wait_for_object_prop('deployment', target_deployment_name, 'replicas', extractor)
@@ -132,7 +131,7 @@ class BgKube(object):
         return color
 
     @log('Waiting for {entity} {name} {prop} to become available')
-    def wait_for_object_prop(self, entity, name, prop, extractor, max_attempts=100):
+    def wait_for_object_prop(self, entity, name, prop, extractor, max_attempts=180):
         attempts = 0
         value = None
 
@@ -142,7 +141,7 @@ class BgKube(object):
 
             try:
                 value = extractor(result or {})
-            except KeyError:
+            except (IndexError, KeyError):
                 pass
             finally:
                 sleep(1)
@@ -157,13 +156,14 @@ class BgKube(object):
     @log('Running smoke tests on {color} deployment...')
     def smoke_test(self, color):
         if self.smoke_service_config:
-            def extractor(result):
-                return result.obj['status']['loadBalancer']['ingress'][0]['ip']
+            def extractor(service):
+                service_address = get_loadbalancer_address(service)
+                return service_address if is_host_up(service_address) else None
 
             self.apply('smoke service', self.smoke_service_config, color=color)
-            service_external_ip = self.wait_for_object_prop('service', self.smoke_service_name, 'ip', extractor)
+            smoke_service_address = self.wait_for_object_prop('service', self.smoke_service_name, 'host', extractor)
 
-            return_code = self.runner.start(self.smoke_tests_command, TEST_HOST=service_external_ip, silent=True)
+            return_code = self.runner.start(self.smoke_tests_command, TEST_HOST=smoke_service_address, silent=True)
             return return_code == 0
 
         return True

@@ -13,7 +13,7 @@ class Runner:
 
         runner = kwargs.get('runner', None)
         if runner:
-            self.init_commands.extend(runner.init_commands)
+            self.init_commands = runner.init_commands + self.init_commands
 
     def user_env(self, env):
         result = environ.copy()
@@ -34,7 +34,9 @@ class Runner:
     @log('$ {command}')
     def start(self, command, silent=False, capture=False, **env):
         def read(st_result):
-            return st_result.decode('utf-8').strip()
+            if st_result and isinstance(st_result, bytes):
+                st_result = st_result.decode('utf-8').strip()
+            return st_result
 
         target_command = '{}; {}'.format(self.get_init_commands_silenced(), command)
         kwargs = dict() if not capture else dict(stdin=PIPE, stdout=PIPE, stderr=PIPE)
