@@ -34,7 +34,7 @@ class TestBgKube(TestCase):
     def test_bgkube_push_calls_container_registry_push_with_expected_attributes(self):
         bg = self.bgkube
 
-        with patch_object(bg.container_registry, 'push') as push_mock:
+        with patch_object(bg.registry, 'push') as push_mock:
             tag = get_random_int()
             bg.push(tag)
 
@@ -53,7 +53,8 @@ class TestBgKube(TestCase):
             filename,
             bg.env_file,
             TAG=tag,
-            COLOR=color
+            COLOR=color,
+            ENV_FILE=bg.env_file
         )
 
     @patch('bgkube.api.KubeApi.pods')

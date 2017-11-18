@@ -23,6 +23,6 @@ spec:
         imagePullPolicy: Always
         command: ["python", "manage.py", "migrate"]
         env:
-        - name: ENV
-          value: $ENV
+        - name: ENV_FILE
+          value: $ENV_FILE
       restartPolicy: Never

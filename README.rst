@@ -20,13 +20,13 @@ Features
 * Publish/Rollback functions.
 * Dynamic variables in YAML configuration files.
 * Smoke tests for health checking before promoting a new environment.
-* Easily extensible to support multiple cloud providers (other than just Google Cloud Platform).
+* Easily extensible to support multiple cloud providers (other than just GKE and AWS/kops).
 * Minimal setup/resources - does not live in the cloud and can be invoked from a CI service like Travis.
 
 Workflow
 ========
 1. Builds and tags a container image from a Dockerfile using ``docker build`` command.
-2. Pushes the tagged image to the container registry (Google Container Registry only at this point).
+2. Pushes the tagged image to the container registry (GCR and ECR only at this point).
 3. Creates a ``Job`` workload for the database migrations (Optional - should be backwards compatible).
 4. Creates a ``Deployment`` workload using the new image.
 5. Creates a ``Service`` workload for health checking which runs the specified smoke tests command (Optional).
@@ -43,19 +43,27 @@ Prerequisites
 =============
 
 * `Docker <https://docs.docker.com/engine/installation>`_
-* Google Cloud
-    * `Create project <https://console.cloud.google.com/projectcreate>`_
-    * `Create cluster <https://console.cloud.google.com/kubernetes/add>`_
-    * `Install SDK <https://cloud.google.com/sdk/downloads>`_
-    * Login using ``gcloud init``
-    * Select project using ``gcloud config set project <project-id>``
 * `Kubernetes command-line tool <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_
 
-Example Setup
-=============
+Google Kubernetes Engine
+------------
+* `Create project <https://console.cloud.google.com/projectcreate>`_
+* `Create cluster <https://console.cloud.google.com/kubernetes/add>`_
+* `Install SDK <https://cloud.google.com/sdk/downloads>`_
+* Login using ``gcloud init``
+* Select project using ``gcloud config set project <project-id>``
+
+AWS using kops
+--------------
+* `Install AWS CLI <http://docs.aws.amazon.com/cli/latest/userguide/installing.html>`_
+* `Install kops CLI <https://github.com/kubernetes/kops/blob/master/docs/install.md>`_
+* `Setup environment <https://github.com/kubernetes/kops/blob/master/docs/aws.md#setup-your-environment>`_
+
+Minimal configurations example
+==============================
 
 Service Config - Public
-------------------------------
+-----------------------
 .. code-block:: yaml
 
     apiVersion: v1
@@ -169,7 +177,7 @@ Publish using
 -------------
 ::
 
-    $ bg-kube --env-file env publish
+    $ bg-kube --env-file .env.prod publish
 
 Future Improvements
 ===================
