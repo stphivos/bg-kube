@@ -29,8 +29,8 @@ spec:
       containers:
       - command: ["gunicorn", "django_app.wsgi", "--name", "todoapp", "-b", ":$CONTAINER_PORT"]
         env:
-        - name: ENV
-          value: $ENV
+        - name: ENV_FILE
+          value: $ENV_FILE
         - name: COLOR
           value: $COLOR
         image: $IMAGE_NAME:$TAG

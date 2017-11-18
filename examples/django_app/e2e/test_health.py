@@ -6,6 +6,9 @@ from unittest import TestCase
 class SmokeTests(TestCase):
     """ You should off course write better health checks than the following... """
 
+    def setUp(self):
+        self.host = os.environ['TEST_HOST']
+
     def test_service_is_up(self):
-        response = requests.get('http://{}/todos/'.format(os.environ['TEST_HOST']))
+        response = requests.get('{}/todos/'.format(self.host))
         assert response.status_code == 200, response.status_code
