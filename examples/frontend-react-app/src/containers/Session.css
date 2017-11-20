@@ -1,0 +1,20 @@
+.Auth-Box {
+  display: table;
+  margin: 0 auto;
+}
+
+.Session-Box {
+}
+
+.Session-Box-Username {
+  line-height: 34px;
+  margin-bottom: 0;
+}
+
+.Session-Box-Actions {
+  float: right;
+}
+
+.Session-Box-Signout {
+  margin-right: 0;
+}

@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: $DEPLOYMENT_NAME-$COLOR
+  namespace: default
+  labels:
+    env: $ENV
+    color: $COLOR
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      env: $ENV
+      color: $COLOR
+      project: $LABEL_PROJECT
+      service: $LABEL_SERVICE
+  template:
+    metadata:
+      labels:
+        env: $ENV
+        project: $LABEL_PROJECT
+        service: $LABEL_SERVICE
+        color: $COLOR
+        tag: "$TAG"
+        type: pod
+    spec:
+      containers:
+      - command: ["/bin/bash", "-c", "REACT_APP_COLOR=$COLOR npm run build && serve -s build -p $CONTAINER_PORT"]
+        image: $IMAGE_NAME:$TAG
+        name: $CONTAINER_NAME
+        ports:
+        - name: container-port
+          containerPort: $CONTAINER_PORT
+          protocol: TCP
