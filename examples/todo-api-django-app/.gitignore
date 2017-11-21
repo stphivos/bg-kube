@@ -1,2 +1,5 @@
+# Django
 static/
-.local*
+
+# .env
+.env.local*
