@@ -1,0 +1,9 @@
+{% extends 'rest_framework/base.html' %}
+
+{% load deployment %}
+
+{% block branding %}
+  <a class='navbar-brand' href='/'>
+      User-api <span class="version">{% version %} ({% env %}-{% color %})</span>
+  </a>
+{% endblock %}

@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: todoapp
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: pass
+
+  web:
+    build: .
+    image: todoapp/todo-api:dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/src
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+    env_file: .env.dev
+    environment:
+      USER_API_SERVICE_HOST: 192.168.99.100
+      USER_API_SERVICE_PORT: 8000

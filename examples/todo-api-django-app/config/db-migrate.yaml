@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    env: $ENV
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
+  name: $LABEL_SERVICE-db-schema-$TAG
+  namespace: default
+spec:
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      name: $LABEL_SERVICE-db-schema
+      labels:
+        env: $ENV
+        project: $LABEL_PROJECT
+        service: $LABEL_SERVICE
+    spec:
+      containers:
+      - name: $CONTAINER_NAME
+        image: $IMAGE_NAME:$TAG
+        imagePullPolicy: Always
+        command: ["python", "manage.py", "migrate"]
+        env:
+        - name: ENV_FILE
+          value: $ENV_FILE
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    env: $ENV
+    project: $LABEL_PROJECT
+    service: $LABEL_SERVICE
+  name: $LABEL_SERVICE-db-seed-$TAG
+  namespace: default
+spec:
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      name: $LABEL_SERVICE-db-seed
+      labels:
+        env: $ENV
+        project: $LABEL_PROJECT
+        service: $LABEL_SERVICE
+    spec:
+      containers:
+      - name: $CONTAINER_NAME
+        image: $IMAGE_NAME:$TAG
+        imagePullPolicy: Always
+        command: ["python", "manage.py", "shell", "-c", "from django.contrib.auth.models import User; from os import environ; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@{}.{}'.format(environ['INGRESS_SUBDOMAIN'], environ['DOMAIN_NAME']), environ['DJANGO_ADMIN_PASSWORD'])"]
+        env:
+        - name: ENV_FILE
+          value: $ENV_FILE
+      restartPolicy: Never
