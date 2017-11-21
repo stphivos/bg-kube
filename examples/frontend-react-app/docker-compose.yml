@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    image: todoapp/frontend:dev
+    command: npm start
+    volumes:
+      - ./src:/app/src
+    ports:
+      - "3000:3000"
+      - "5000:5000"
