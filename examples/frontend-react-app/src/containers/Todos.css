@@ -1,3 +1,7 @@
 .Todos-Page-Actions {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.Todos-Page-List .label {
+    margin-left: 5px;
 }
