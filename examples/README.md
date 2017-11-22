@@ -1,9 +1,9 @@
 # Todo's app
 
 ## Services
-* [Frontend - React](examples/frontend-react-app/)
-* [User auth api - Django](examples/user-api-django-app/)
-* [User todos api - Django](examples/todo-api-django-app/)
+* [Frontend - React](frontend-react-app/)
+* [User auth api - Django](user-api-django-app/)
+* [User todos api - Django](todo-api-django-app/)
 
 ![Todos app screenshot](https://storage.googleapis.com/todoapp-123456/todos-prod-green.png "Todos frontend")
 
