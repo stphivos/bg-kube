@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { withRouter } from 'react-router'
 import { BaseComponent } from '../utils/components'
-import { TodoList, TodoEditor } from '../components/todo'
+import { TodoList, TodoEditor, TodoMemo } from '../components/todo'
 import { todoActions } from '../store'
 import './Todos.css'
 
@@ -33,6 +33,7 @@ class Todos extends BaseComponent {
       <div className="Todos-Page">
         <div className="Todos-Page-Actions">
           <TodoEditor onSave={this.onSaveTodo} todo={{}} />
+          <TodoMemo />
         </div>
 
         {this.messageAlert()}

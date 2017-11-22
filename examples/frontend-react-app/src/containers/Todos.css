@@ -5,3 +5,29 @@
 .Todos-Page-List .label {
     margin-left: 5px;
 }
+
+.Todos-Memo {
+  float: right;
+  line-height: 34px;
+}
+
+.Todos-Memo .label {
+  margin-right: 0;
+  margin-left: 10px;
+}
+
+.Todos-Memo .gray {
+  background: gray;
+}
+
+.Todos-Memo .red {
+  background: red;
+}
+
+.Todos-Memo .blue {
+  background: blue;
+}
+
+.Todos-Memo .orange {
+  background: orange;
+}
