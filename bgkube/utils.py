@@ -53,6 +53,11 @@ def timestamp():
     return int(time.time())
 
 
+def error(msg, **output_kwargs):
+    output(msg, **output_kwargs)
+    exit(1)
+
+
 def output(msg, end='\n', **kwargs):
     if not os.environ.get('PYTEST_CURRENT_TEST', None):
         print(msg, end=end, **kwargs)

@@ -57,3 +57,12 @@ def get_options():
         db_migrations_job_config_seed='./config/jobs/db-migrate.yaml',
         kops_state_store='s3://todoapp-cluster-state-store'
     )
+
+
+def get_named_resource(kind=None, name=None):
+    return {
+        'kind': kind or get_random_str(),
+        'metadata': {
+            'name': name or get_random_str()
+        }
+    }

@@ -8,6 +8,7 @@ metadata:
   name: $LABEL_SERVICE-db-schema-$TAG
   namespace: default
 spec:
+  completions: 2
   activeDeadlineSeconds: 120
   template:
     metadata:
@@ -37,6 +38,7 @@ metadata:
   name: $LABEL_SERVICE-db-seed-$TAG
   namespace: default
 spec:
+  completions: 2
   activeDeadlineSeconds: 120
   template:
     metadata:
