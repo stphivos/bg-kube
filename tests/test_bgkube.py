@@ -172,24 +172,24 @@ class TestBgKube(TestCase):
         init_mock.assert_not_called()
         apply_mock.assert_called_once_with(tag, color)
 
-    @patch('bgkube.api.KubeApi.service')
-    def test_bgkube_active_env_returns_public_service_selector_color_when_found(self, service_mock):
+    @patch('bgkube.api.KubeApi.resource_by_name')
+    def test_bgkube_active_env_returns_public_service_selector_color_when_found(self, resource_mock):
         service = Mock(obj={'spec': {'selector': {'color': get_random_str()}}})
-        service_mock.return_value = service
+        resource_mock.return_value = service
 
         env = self.bgkube.active_env()
 
         self.assertEqual(env, service.obj['spec']['selector']['color'])
-        service_mock.assert_called_once_with(self.bgkube.service_name)
+        resource_mock.assert_called_once_with('Service', self.bgkube.service_name)
 
-    @patch('bgkube.api.KubeApi.service')
-    def test_bgkube_active_env_returns_null_when_public_service_not_found(self, service_mock):
-        service_mock.return_value = None
+    @patch('bgkube.api.KubeApi.resource_by_name')
+    def test_bgkube_active_env_returns_null_when_public_service_not_found(self, resource_mock):
+        resource_mock.return_value = None
 
         env = self.bgkube.active_env()
 
         self.assertIsNone(env)
-        service_mock.assert_called_once_with(self.bgkube.service_name)
+        resource_mock.assert_called_once_with('Service', self.bgkube.service_name)
 
     @patch('bgkube.bg.BgKube.active_env')
     def test_bgkube_other_env_returns_opposite_of_active_env_otherwise_null(self, active_env_mock):

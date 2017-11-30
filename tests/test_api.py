@@ -4,6 +4,7 @@ from unittest import TestCase
 from yaml import load
 
 from bgkube.api import KubeApi
+from tests.__mocks__ import get_named_resource
 
 
 class TestApi(TestCase):
@@ -49,7 +50,7 @@ class TestApi(TestCase):
     @patch('pykube.Deployment.exists')
     @patch('bgkube.api.KubeApi.get_config_with_vars')
     def test_api_apply_updates_existing_deployment_using_config_data(self, get_config_mock, exists_mock, update_mock):
-        get_config_mock.return_value = iter([{'kind': 'Deployment'}])
+        get_config_mock.return_value = iter([get_named_resource('Deployment')])
         exists_mock.return_value = True
 
         self.api.apply('config file', '.env file')
@@ -60,7 +61,7 @@ class TestApi(TestCase):
     @patch('pykube.Service.exists')
     @patch('bgkube.api.KubeApi.get_config_with_vars')
     def test_api_apply_updates_existing_service_using_config_data(self, get_config_mock, exists_mock, update_mock):
-        get_config_mock.return_value = iter([{'kind': 'Service'}])
+        get_config_mock.return_value = iter([get_named_resource('Service')])
         exists_mock.return_value = True
 
         self.api.apply('config file', '.env file')
@@ -71,7 +72,7 @@ class TestApi(TestCase):
     @patch('pykube.Job.exists')
     @patch('bgkube.api.KubeApi.get_config_with_vars')
     def test_api_apply_creates_new_job_using_config_data(self, get_config_mock, exists_mock, create_mock):
-        get_config_mock.return_value = iter([{'kind': 'Job'}])
+        get_config_mock.return_value = iter([get_named_resource('Job')])
         exists_mock.return_value = False
 
         self.api.apply('config file', '.env file')
@@ -79,42 +80,42 @@ class TestApi(TestCase):
         create_mock.assert_called_once_with()
 
     @patch('pykube.Service.objects')
-    def test_api_service_returns_service_object_by_name_when_it_exists(self, objects_mock):
+    def test_api_resource_by_name_returns_service_object_when_it_exists(self, objects_mock):
         name = 'service name'
         obj = {'name': name}
 
         get_mock = Mock(return_value=obj)
         objects_mock.return_value = Mock(get_by_name=get_mock)
 
-        result = self.api.service(name)
+        result = self.api.resource_by_name('Service', name)
 
         self.assertEqual(result, obj)
         get_mock.assert_called_once_with(name)
 
     @patch('pykube.Service.objects')
-    def test_api_service_returns_none_when_not_found_by_name(self, objects_mock):
+    def test_api_resource_by_name_returns_none_when_service_not_found(self, objects_mock):
         objects_mock.return_value = Mock(get_by_name=Mock(side_effect=ObjectDoesNotExist()))
 
-        self.assertIsNone(self.api.service('service name'))
+        self.assertIsNone(self.api.resource_by_name('Service', 'service name'))
 
     @patch('pykube.Deployment.objects')
-    def test_api_deployment_returns_deployment_object_by_name_when_it_exists(self, objects_mock):
+    def test_api_resource_by_name_returns_deployment_object_when_it_exists(self, objects_mock):
         name = 'deployment name'
         obj = {'name': name}
 
         get_mock = Mock(return_value=obj)
         objects_mock.return_value = Mock(get_by_name=get_mock)
 
-        result = self.api.deployment(name)
+        result = self.api.resource_by_name('Deployment', name)
 
         self.assertEqual(result, obj)
         get_mock.assert_called_once_with(name)
 
     @patch('pykube.Deployment.objects')
-    def test_api_deployment_returns_none_when_not_found_by_name(self, objects_mock):
+    def test_api_resource_by_name_returns_none_when_deployment_not_found(self, objects_mock):
         objects_mock.return_value = Mock(get_by_name=Mock(side_effect=ObjectDoesNotExist()))
 
-        self.assertIsNone(self.api.deployment('deployment name'))
+        self.assertIsNone(self.api.resource_by_name('Deployment', 'deployment name'))
 
     @patch('pykube.Pod.objects')
     def test_api_pods_returns_list_of_pod_objects_filtered_by_label_selectors(self, objects_mock):

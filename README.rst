@@ -57,7 +57,7 @@ AWS using kops
 --------------
 * `Install AWS CLI <http://docs.aws.amazon.com/cli/latest/userguide/installing.html>`_
 * `Install kops CLI <https://github.com/kubernetes/kops/blob/master/docs/install.md>`_
-* `Setup environment <https://github.com/kubernetes/kops/blob/master/docs/aws.md#setup-your-environment>`_
+* `Setup environment <https://github.com/kubernetes/kops/blob/master/docs/aws.md>`_
 
 Minimal configurations example
 ==============================
@@ -194,16 +194,17 @@ Arguments
     -z CLUSTER_ZONE, --cluster-zone CLUSTER_ZONE: zone name of the cluster location
     -m DOCKER_MACHINE_NAME, --docker-machine-name DOCKER_MACHINE_NAME: name of the docker machine if applicable
     -i IMAGE_NAME, --image-name IMAGE_NAME: name of the container image to build using docker
-    -s SERVICE_NAME, --service-name SERVICE_NAME: name of the public service intended to be exposed
-    --service-config SERVICE_CONFIG: public service config
-    --deployment-name DEPLOYMENT_NAME: name of the deployment containing the public service pods
-    --deployment-config DEPLOYMENT_CONFIG: deployment config
+    -s SERVICE_NAME, --service-name SERVICE_NAME: name of the main service intended to serve clients
+    --service-config SERVICE_CONFIG: config of the main service
+    --service-timeout SERVICE_TIMEOUT timeout secs to wait for healthy state or return an error
+    --deployment-config DEPLOYMENT_CONFIG config of the deployment containing the main service pods
+    --deployment-timeout DEPLOYMENT_TIMEOUT timeout secs to wait for healthy state or return an error
     -x CONTEXT, --context CONTEXT: docker context path used to build the container image
     -d DOCKERFILE, --dockerfile DOCKERFILE: Dockerfile path
-    --smoke-service-name SMOKE_SERVICE_NAME: name of the smoke service meant to be exposed for health checks
-    --smoke-service-config SMOKE_SERVICE_CONFIG: smoke service config
+    --smoke-service-config SMOKE_SERVICE_CONFIG config of the smoke service lb exposed for health checks
     --smoke-tests-command SMOKE_TESTS_COMMAND: shell command to run health checks against the smoke service
     --db-migrations-job-config-seed DB_MIGRATIONS_JOB_CONFIG_SEED: job config to populate the database with initial data
+    --db-migrations-job-timeout DB_MIGRATIONS_JOB_TIMEOUT timeout secs to wait for healthy state or return an error
     --db-migrations-status-command DB_MIGRATIONS_STATUS_COMMAND: shell command executed on any of the running deployment pods to return the current migrations status
     --db-migrations-apply-command DB_MIGRATIONS_APPLY_COMMAND: shell command executed on any of the running deployment pods to apply the latest migrations generated in the current image
     --db-migrations-rollback-command DB_MIGRATIONS_ROLLBACK_COMMAND: shell command executed on any of the running deployment pods with the migrations status command stdout as argument -   retrieved before applying migrations, to perform a rollback to that state

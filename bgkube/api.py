@@ -22,7 +22,7 @@ class KubeApi:
             yield load(section)
 
     def apply(self, config_file, env_file, **attrs):
-        for config in self.get_config_with_vars(config_file, env_file, **attrs):
+        def apply_object(config):
             obj = getattr(pykube, config['kind'])(self.client(), config)
 
             if obj.exists():
@@ -30,15 +30,14 @@ class KubeApi:
             else:
                 obj.create()
 
-    def service(self, name):
-        try:
-            return pykube.Service.objects(self.client()).get_by_name(name)
-        except pykube.ObjectDoesNotExist:
-            return None
+            return obj.name
 
-    def deployment(self, name):
+        objects = [apply_object(config) for config in self.get_config_with_vars(config_file, env_file, **attrs)]
+        return objects
+
+    def resource_by_name(self, resource, name):
         try:
-            return pykube.Deployment.objects(self.client()).get_by_name(name)
+            return getattr(pykube, resource).objects(self.client()).get_by_name(name)
         except pykube.ObjectDoesNotExist:
             return None
 

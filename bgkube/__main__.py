@@ -3,7 +3,7 @@ from traceback import format_exc
 
 from bgkube.bg import BgKube
 from bgkube.errors import BlueGreenError
-from bgkube.utils import dot_env_dict, output
+from bgkube.utils import dot_env_dict, error
 
 
 def get_parser():
@@ -15,16 +15,17 @@ def get_parser():
     parser.add_argument('-z', '--cluster-zone', help='zone name of the cluster location')
     parser.add_argument('-m', '--docker-machine-name', help='name of the docker machine if applicable')
     parser.add_argument('-i', '--image-name', help='name of the container image to build using docker')
-    parser.add_argument('-s', '--service-name', help='name of the public service intended to be exposed')
-    parser.add_argument('--service-config', help='public service config')
-    parser.add_argument('--deployment-name', help='name of the deployment containing the public service pods')
-    parser.add_argument('--deployment-config', help='deployment config')
+    parser.add_argument('-s', '--service-name', help='name of the main service intended to serve clients')
+    parser.add_argument('--service-config', help='config of the main service')
+    parser.add_argument('--service-timeout', help='timeout secs to wait for healthy state or return an error')
+    parser.add_argument('--deployment-config', help='config of the deployment containing the main service pods')
+    parser.add_argument('--deployment-timeout', help='timeout secs to wait for healthy state or return an error')
     parser.add_argument('-x', '--context', help='docker context path used to build the container image')
     parser.add_argument('-d', '--dockerfile', help='Dockerfile path')
-    parser.add_argument('--smoke-service-name', help='name of the smoke service meant to be exposed for health checks')
-    parser.add_argument('--smoke-service-config', help='smoke service config')
+    parser.add_argument('--smoke-service-config', help='config of the smoke service lb exposed for health checks')
     parser.add_argument('--smoke-tests-command', help='shell command to run health checks against the smoke service')
     parser.add_argument('--db-migrations-job-config-seed', help='job config to populate the database with initial data')
+    parser.add_argument('--db-migrations-job-timeout', help='timeout secs to wait for healthy state or return an error')
     parser.add_argument(
         '--db-migrations-status-command',
         help='shell command executed on any of the running deployment pods to return the current migrations status'
@@ -63,9 +64,9 @@ def run():
     try:
         getattr(BgKube(options), options.command)(*options.command_args)
     except BlueGreenError as e:
-        output(e)
+        error(e)
     except Exception:
-        output(format_exc())
+        error(format_exc())
 
 
 if __name__ == '__main__':

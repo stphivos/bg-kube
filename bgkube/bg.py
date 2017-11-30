@@ -10,18 +10,22 @@ from bgkube.utils import output, log, timestamp, require, get_loadbalancer_addre
 
 class BgKubeMeta(type):
     required = [
-        'cluster_zone', 'cluster_name', 'image_name', 'service_name', 'service_config',
-        'deployment_name', 'deployment_config'
+        'cluster_zone', 'cluster_name', 'image_name', 'service_name', 'service_config', 'deployment_config'
     ]
     optional = [
-        'context', 'dockerfile', 'env_file', 'smoke_service_name', 'smoke_tests_command', 'smoke_service_config',
-        'docker_machine_name', 'db_migrations_job_config_seed', 'db_migrations_status_command',
-        'db_migrations_apply_command', 'db_migrations_rollback_command', 'kops_state_store', 'container_registry'
+        'context', 'dockerfile', 'env_file', 'smoke_tests_command', 'smoke_service_config', 'docker_machine_name',
+        'db_migrations_job_config_seed', 'db_migrations_status_command', 'db_migrations_apply_command',
+        'db_migrations_rollback_command', 'kops_state_store', 'container_registry', 'service_timeout',
+        'smoke_service_timeout', 'deployment_timeout', 'db_migrations_job_timeout'
     ]
     optional_defaults = {
         'context': '.',
         'dockerfile': './Dockerfile',
-        'container_registry': registries.DEFAULT
+        'container_registry': registries.DEFAULT,
+        'service_timeout': 120,
+        'smoke_service_timeout': 120,
+        'deployment_timeout': 120,
+        'db_migrations_job_timeout': 120
     }
 
     def __new__(mcs, name, bases, attrs):
@@ -68,7 +72,7 @@ class BgKube(object):
 
     @log('Applying {_} using config: {filename}...')
     def apply(self, _, filename, tag=None, color=''):
-        self.kube_api.apply(filename, self.env_file, TAG=tag, COLOR=color, ENV_FILE=self.env_file)
+        return self.kube_api.apply(filename, self.env_file, TAG=tag, COLOR=color, ENV_FILE=self.env_file)
 
     def pod_find(self, tag, color):
         results = [pod for pod in self.kube_api.pods(tag=tag, color=color) if pod.ready]
@@ -80,7 +84,20 @@ class BgKube(object):
 
     def migrate_initial(self, tag):
         if self.db_migrations_job_config_seed:
-            self.apply('db migration', self.db_migrations_job_config_seed, tag=tag)
+            def job_completions_extractor(job):
+                completions = job.obj['spec']['completions']
+                succeeded_completions = job.obj['status']['succeeded']
+
+                return completions if succeeded_completions == completions else None
+
+            applied_objects = self.apply('db migration', self.db_migrations_job_config_seed, tag=tag)
+            self.wait_for_resource_running(
+                'Job',
+                'completions',
+                job_completions_extractor,
+                self.db_migrations_job_timeout,
+                *applied_objects
+            )
 
     def migrate_apply(self, tag, color):
         previous_state = None
@@ -109,7 +126,7 @@ class BgKube(object):
         return is_initial, db_migrations_previous_state
 
     def active_env(self):
-        service = self.kube_api.service(self.service_name)
+        service = self.kube_api.resource_by_name('Service', self.service_name)
         return None if not service else service.obj['spec']['selector']['color']
 
     def other_env(self):
@@ -120,48 +137,68 @@ class BgKube(object):
 
     def deploy(self, tag):
         color = self.other_env() or 'blue'
-        target_deployment_name = '{}-{}'.format(self.deployment_name, color)
+        applied_objects = self.apply('deployment', self.deployment_config, tag=tag, color=color)
 
-        def extractor(deployment):
-            return deployment.replicas if deployment.ready and self.pod_find(tag, color) else None
-
-        self.apply('deployment', self.deployment_config, tag=tag, color=color)
-        self.wait_for_object_prop('deployment', target_deployment_name, 'replicas', extractor)
+        self.wait_for_resource_running(
+            'Deployment',
+            'replicas',
+            lambda deployment: deployment.replicas if deployment.ready and self.pod_find(tag, color) else None,
+            self.deployment_timeout,
+            *applied_objects
+        )
 
         return color
 
-    @log('Waiting for {entity} {name} {prop} to become available')
-    def wait_for_object_prop(self, entity, name, prop, extractor, max_attempts=180):
-        attempts = 0
-        value = None
-
-        while not value and attempts < max_attempts:
-            output('.', '', flush=True)
-            result = getattr(self.kube_api, entity)(name)
-
+    @log('Waiting for {resource_type} {prop} to become available')
+    def wait_for_resource_running(self, resource_type, prop, prop_extractor, timeout_seconds, *object_names):
+        def try_extract_value(resource_name):
             try:
-                value = extractor(result or {})
-            except (IndexError, KeyError):
-                pass
-            finally:
-                sleep(1)
-                attempts += 1
+                result = self.kube_api.resource_by_name(resource_type, resource_name)
+                return prop_extractor(result or {})
+            except (IndexError, KeyError, AttributeError):
+                return None
 
-        if value:
-            output('\n{} {} {} is: {}'.format(entity, name, prop, value))
+        def extract_value_with_timeout(resource_name):
+            value = None
+
+            if timeout_seconds:
+                attempts = 0
+
+                while not value and attempts < timeout_seconds:
+                    sleep(1)
+                    attempts += 1
+                    output('.', '', flush=True)
+                    value = try_extract_value(resource_name)
+            else:
+                value = try_extract_value(resource_name)
+
+            if value:
+                output('\n{} {} {} is: {}'.format(resource_type, resource_name, prop, value))
+            elif timeout_seconds:
+                raise ActionFailedError(
+                    '\nFailed after {} seconds elapsed. For more info try running: $ kubectl describe {} {}'.format(
+                        timeout_seconds, resource_type, resource_name))
+
             return value
 
-        raise ActionFailedError('Timed out while waiting for service {} after {} attempts'.format(name, max_attempts))
+        values = [extract_value_with_timeout(name) for name in object_names]
+        return values
 
     @log('Running smoke tests on {color} deployment...')
     def smoke_test(self, color):
         if self.smoke_service_config:
-            def extractor(service):
+            def service_host_extractor(service):
                 service_address = get_loadbalancer_address(service)
                 return service_address if is_host_up(service_address) else None
 
-            self.apply('smoke service', self.smoke_service_config, color=color)
-            smoke_service_address = self.wait_for_object_prop('service', self.smoke_service_name, 'host', extractor)
+            applied_objects = self.apply('smoke service', self.smoke_service_config, color=color)
+            smoke_service_address = ','.join(self.wait_for_resource_running(
+                'Service',
+                'host',
+                service_host_extractor,
+                self.smoke_service_timeout,
+                *applied_objects
+            ))
 
             return_code = self.runner.start(self.smoke_tests_command, TEST_HOST=smoke_service_address, silent=True)
             return return_code == 0
@@ -171,6 +208,13 @@ class BgKube(object):
     @log('Promoting {color} deployment...')
     def swap(self, color):
         self.apply('public service', self.service_config, color=color)
+        self.wait_for_resource_running(
+            'Service',
+            'status',
+            lambda service: 'ready' if service.exists(ensure=True) else None,
+            self.service_timeout,
+            self.service_name
+        )
 
     @log('Publishing...')
     def publish(self):
