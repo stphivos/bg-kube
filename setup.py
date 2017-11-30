@@ -13,7 +13,7 @@ def read(filename):
 setup(
     name='bg-kube',
     packages=['bgkube'],
-    version='0.0.11',
+    version='0.0.12',
     description='An interface for automating blue-green deployments using Kubernetes',
     long_description=read('README.rst'),
     author='Phivos Stylianides',
