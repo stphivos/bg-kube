@@ -29,7 +29,7 @@ Workflow
 2. Pushes the tagged image to the container registry (GCR and ECR only at this point).
 3. Creates a ``Job`` workload for the database migrations (Optional - should be backwards compatible).
 4. Creates a ``Deployment`` workload using the new image.
-5. Creates a ``Service`` workload for health checking which runs the specified smoke tests command (Optional).
+5. Creates a ``Service`` for health checking which runs the specified smoke tests command (Optional).
     * If the tests were successful, it updates the public ``Service`` workload to point to the new deployment.
     * If the tests have failed, the public service remains unaffected.
 
