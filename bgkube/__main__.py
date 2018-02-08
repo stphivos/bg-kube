@@ -14,6 +14,7 @@ def get_parser():
     parser.add_argument('-c', '--cluster-name', help='unique name of the cluster')
     parser.add_argument('-z', '--cluster-zone', help='zone name of the cluster location')
     parser.add_argument('-m', '--docker-machine-name', help='name of the docker machine if applicable')
+    parser.add_argument('--docker-build-args', help='arguments supplied to docker build command separated with spaces')
     parser.add_argument('-i', '--image-name', help='name of the container image to build using docker')
     parser.add_argument('-s', '--service-name', help='name of the main service intended to serve clients')
     parser.add_argument('--service-config', help='config of the main service')

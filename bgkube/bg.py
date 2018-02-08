@@ -16,7 +16,7 @@ class BgKubeMeta(type):
         'context', 'dockerfile', 'env_file', 'smoke_tests_command', 'smoke_service_config', 'docker_machine_name',
         'db_migrations_job_config_seed', 'db_migrations_status_command', 'db_migrations_apply_command',
         'db_migrations_rollback_command', 'kops_state_store', 'container_registry', 'service_timeout',
-        'smoke_service_timeout', 'deployment_timeout', 'db_migrations_job_timeout'
+        'smoke_service_timeout', 'deployment_timeout', 'db_migrations_job_timeout', 'docker_build_args'
     ]
     optional_defaults = {
         'context': '.',
@@ -25,7 +25,8 @@ class BgKubeMeta(type):
         'service_timeout': 120,
         'smoke_service_timeout': 120,
         'deployment_timeout': 120,
-        'db_migrations_job_timeout': 120
+        'db_migrations_job_timeout': 120,
+        'docker_build_args': ''
     }
 
     def __new__(mcs, name, bases, attrs):
@@ -57,13 +58,17 @@ class BgKube(object):
     @log('Building image {image_name} using {dockerfile}...')
     def build(self):
         tag = timestamp()
-        self.runner.start(cmd.DOCKER_BUILD.format(
+        command = [cmd.DOCKER_BUILD.format(
             context=self.context,
             dockerfile=self.dockerfile,
             image=self.image_name,
             tag=tag,
-        ))
+        )]
 
+        if self.docker_build_args:
+            command.append(' '.join('--build-arg {}'.format(b) for b in self.docker_build_args.split(' ')))
+
+        self.runner.start(' '.join(command))
         return tag
 
     @log('Pushing image {image_name}:{tag} to {registry}...')
