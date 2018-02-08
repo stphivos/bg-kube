@@ -45,8 +45,15 @@ class BgKube(object):
         self.load_options(options)
 
         self.kube_api = KubeApi()
-        self.runner = Runner(cmd.DOCKERMACHINE_EVAL_ENV.format(self.docker_machine_name))
+        self.runner = Runner(self.get_docker_daemon())
         self.registry = registries.load(self.runner, options)
+
+    @property
+    def is_minikube(self):
+        return self.container_registry == 'local'
+
+    def get_docker_daemon(self):
+        return cmd.MINIKUBE_DOCKER_ENV if self.is_minikube else cmd.DOCKERMACHINE_ENV.format(self.docker_machine_name)
 
     def load_options(self, options):
         for opt in self.required:
@@ -193,7 +200,11 @@ class BgKube(object):
     def smoke_test(self, color):
         if self.smoke_service_config:
             def service_host_extractor(service):
-                service_address = get_loadbalancer_address(service)
+                if self.is_minikube:
+                    service_address = self.runner.start(cmd.MINIKUBE_SERVICE_URL.format(service.name), capture=True)
+                else:
+                    service_address = get_loadbalancer_address(service)
+
                 return service_address if is_host_up(service_address) else None
 
             applied_objects = self.apply('smoke service', self.smoke_service_config, color=color)

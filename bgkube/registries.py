@@ -42,6 +42,20 @@ class AwsContainerRegistry(ContainerRegistry):
         self.runner.start(cmd.AWS_DOCKER_PUSH.format(image))
 
 
+class LocalContainerRegistry(ContainerRegistry):
+    alias = 'local'
+    name = 'Local container registry'
+
+    def __init__(self, runner, **_):
+        self.runner = Runner(
+            cmd.KUBECTL_CONFIG_MINIKUBE,
+            runner=runner
+        )
+
+    def push(self, image):
+        pass
+
+
 DEFAULT = 'gcr'
 MODULE = __name__
 BUILTIN = {cls.alias: '{}.{}'.format(MODULE, name) for name, cls in module_type_subclasses(MODULE, ContainerRegistry)}
