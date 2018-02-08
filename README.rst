@@ -186,13 +186,14 @@ Arguments
   positional arguments:
     {publish,rollback,build,push}
     command_args
-  
+
   optional arguments:
     -h, --help: show this help message and exit
     -e ENV_FILE, --env-file ENV_FILE: .env file for the options below and application vars in the configs
     -c CLUSTER_NAME, --cluster-name CLUSTER_NAME: unique name of the cluster
     -z CLUSTER_ZONE, --cluster-zone CLUSTER_ZONE: zone name of the cluster location
     -m DOCKER_MACHINE_NAME, --docker-machine-name DOCKER_MACHINE_NAME: name of the docker machine if applicable
+    --docker-build-args DOCKER_BUILD_ARGS arguments supplied to docker build command separated with spaces
     -i IMAGE_NAME, --image-name IMAGE_NAME: name of the container image to build using docker
     -s SERVICE_NAME, --service-name SERVICE_NAME: name of the main service intended to serve clients
     --service-config SERVICE_CONFIG: config of the main service
