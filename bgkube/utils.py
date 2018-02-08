@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import sys
 import time
 import requests
 from inspect import isclass
@@ -18,6 +19,7 @@ def require(obj, attr):
 
 
 def dot_env_dict(filename):
+    # TODO: Handle lines with inline comment
     with open(filename) as fp:
         for line in fp.readlines():
             line = line.strip()
@@ -60,7 +62,10 @@ def error(msg, **output_kwargs):
 
 def output(msg, end='\n', **kwargs):
     if not os.environ.get('PYTEST_CURRENT_TEST', None):
+        flush = kwargs.pop('flush', False)
         print(msg, end=end, **kwargs)
+        if flush:
+            sys.stdout.flush()
 
 
 def log(message, **defaults):
