@@ -86,12 +86,12 @@ class BgKube(object):
     def apply(self, _, filename, tag=None, color=''):
         return self.kube_api.apply(filename, self.env_file, TAG=tag, COLOR=color, ENV_FILE=self.env_file)
 
-    def pod_find(self, tag, color):
-        results = [pod for pod in self.kube_api.pods(tag=tag, color=color) if pod.ready]
+    def pod_find(self, tag):
+        results = [pod for pod in self.kube_api.pods(tag=tag) if pod.ready]
         return results[0] if results else None
 
-    def pod_exec(self, tag, color, command, *args):
-        pod = self.pod_find(tag, color).name
+    def pod_exec(self, tag, command, *args):
+        pod = self.pod_find(tag).name
         return self.runner.start(cmd.KUBECTL_EXEC.format(pod=pod, command=command, args=' '.join(args)), capture=True)
 
     def migrate_initial(self, tag):
@@ -111,35 +111,35 @@ class BgKube(object):
                 *applied_objects
             )
 
-    def migrate_apply(self, tag, color):
+    def migrate_apply(self, tag):
         previous_state = None
 
         if self.db_migrations_status_command:
-            previous_state = self.pod_exec(tag, color, self.db_migrations_status_command)
+            previous_state = self.pod_exec(tag, self.db_migrations_status_command)
 
         if self.db_migrations_apply_command:
-            self.pod_exec(tag, color, self.db_migrations_apply_command)
+            self.pod_exec(tag, self.db_migrations_apply_command)
 
         return previous_state
 
-    def migrate_rollback(self, tag, color, previous_state):
+    def migrate_rollback(self, tag, previous_state):
         if self.db_migrations_rollback_command:
-            self.pod_exec(tag, color, self.db_migrations_rollback_command, previous_state)
+            self.pod_exec(tag, self.db_migrations_rollback_command, previous_state)
 
-    def migrate(self, tag, color):
+    def migrate(self, tag):
         db_migrations_previous_state = None
         is_initial = self.active_env() is None
 
         if is_initial:
             self.migrate_initial(tag)
         else:
-            db_migrations_previous_state = self.migrate_apply(tag, color)
+            db_migrations_previous_state = self.migrate_apply(tag)
 
         return is_initial, db_migrations_previous_state
 
     def active_env(self):
         service = self.kube_api.resource_by_name('Service', self.service_name)
-        return None if not service else service.obj['spec']['selector']['color']
+        return None if not service else service.obj['spec']['selector'].get('color', None)
 
     def other_env(self):
         return {
@@ -154,7 +154,7 @@ class BgKube(object):
         self.wait_for_resource_running(
             'Deployment',
             'replicas',
-            lambda deployment: deployment.replicas if deployment.ready and self.pod_find(tag, color) else None,
+            lambda deployment: deployment.replicas if deployment.ready and self.pod_find(tag) else None,
             self.deployment_timeout,
             *applied_objects
         )
@@ -238,14 +238,14 @@ class BgKube(object):
         self.push(next_tag)
 
         next_color = self.deploy(next_tag)
-        is_initial, db_migrations_previous_state = self.migrate(next_tag, next_color)
+        is_initial, db_migrations_previous_state = self.migrate(next_tag)
         health_ok = self.smoke_test(next_color)
 
         if health_ok:
             self.swap(next_color)
         else:
             if not is_initial:
-                self.migrate_rollback(next_tag, next_color, db_migrations_previous_state)
+                self.migrate_rollback(next_tag, db_migrations_previous_state)
 
             raise ActionFailedError('Cannot promote {} deployment because smoke tests failed'.format(next_color))
 
