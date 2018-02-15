@@ -12,8 +12,8 @@ bg-kube
 *******
 An interface for automating blue-green deployments on a Kubernetes cluster.
 
-**Please note that this project is in initial development and it's not ready for production use yet.
-Use with caution in a test/staging environment.**
+**Please note that this project is in initial development and it might not be production-ready yet.
+Use with caution.**
 
 Features
 ========
@@ -32,6 +32,12 @@ Workflow
 5. Creates a ``Service`` for health checking which runs the specified smoke tests command (Optional).
     * If the tests were successful, it updates the public ``Service`` workload to point to the new deployment.
     * If the tests have failed, the public service remains unaffected.
+
+See it in action
+================
+::
+
+Check out this `blog post <http://pstylianides.com/deploy-and-scale-a-multi-env-service-on-kubernetes/>`_.
 
 Installation
 ============
